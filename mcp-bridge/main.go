@@ -639,8 +639,8 @@ func (s *httpServer) routes() {
 		if r.Method == http.MethodGet && wantsSSE(r) {
 			// 兼容旧回退：第一条发 endpoint 事件
 			flusher, ok := beginSSE(w)
-			if !ok { 
-				return 
+			if !ok {
+				return
 			}
 			fmt.Fprintf(w, "event: endpoint\n")
 			fmt.Fprintf(w, "data: {\"endpoint\":\"/mcp\"}\n\n")
@@ -650,26 +650,26 @@ func (s *httpServer) routes() {
 			defer ticker.Stop()
 			for {
 				select {
-				case <-r.Context().Done(): 
+				case <-r.Context().Done():
 					return
-				case <-ticker.C: 
+				case <-ticker.C:
 					fmt.Fprint(w, ": ping\n\n")
 					flusher.Flush()
 				}
 			}
 		}
 
-		if r.Method != http.MethodPost { 
+		if r.Method != http.MethodPost {
 			http.Error(w, "POST only", http.StatusMethodNotAllowed)
-			return 
+			return
 		}
 
 		var req rpcReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32700, Message: "Parse error"}}
-			if wantsSSE(r) { 
+			if wantsSSE(r) {
 				writeRPCSSE(w, resp)
-				return 
+				return
 			}
 			writeRPCJSON(w, resp)
 			return
@@ -682,9 +682,9 @@ func (s *httpServer) routes() {
 				"capabilities":    map[string]any{"tools": map[string]any{}},
 				"serverInfo":      map[string]any{"name": "mcp-http-bridge", "version": "0.3.0"},
 			}}
-			if wantsSSE(r) { 
+			if wantsSSE(r) {
 				writeRPCSSE(w, resp)
-				return 
+				return
 			}
 			writeRPCJSON(w, resp)
 			return
@@ -762,9 +762,9 @@ func beginSSE(w http.ResponseWriter) (http.Flusher, bool) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no") // 反代时禁缓冲
 	flusher, ok := w.(http.Flusher)
-	if !ok { 
+	if !ok {
 		http.Error(w, "streaming not supported", 500)
-		return nil, false 
+		return nil, false
 	}
 	return flusher, true
 }
@@ -775,8 +775,8 @@ func writeRPCJSON(w http.ResponseWriter, resp rpcResp) {
 
 func writeRPCSSE(w http.ResponseWriter, resp rpcResp) {
 	flusher, ok := beginSSE(w)
-	if !ok { 
-		return 
+	if !ok {
+		return
 	}
 	b, _ := json.Marshal(resp)
 	// 一条事件承载本次 JSON-RPC 响应，并立刻 flush
