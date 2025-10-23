@@ -82,7 +82,7 @@ INIT_RETRY=8
 ENV
 
 # 更新 systemd 服务文件
-sudo tee /etc/systemd/system/mcp-bridge.service >/dev/null <<UNIT
+cat > /tmp/mcp-bridge.service <<EOF
 [Unit]
 Description=HTTP MCP Bridge (preheated MCP tools)
 Wants=network-online.target
@@ -102,7 +102,10 @@ LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
-UNIT
+EOF
+
+sudo cp /tmp/mcp-bridge.service /etc/systemd/system/mcp-bridge.service
+rm /tmp/mcp-bridge.service
 
 # 4. 重新加载 systemd 并启动服务
 echo "🔄 重新加载 systemd 并启动服务..."
