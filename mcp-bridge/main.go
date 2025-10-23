@@ -322,14 +322,14 @@ func (s *stdioBackend) readFrame() ([]byte, error) {
 	cl := 0
 	var firstLine string
 	headerMode := false
-	
+
 	for {
 		line, err := s.reader.ReadString('\n')
 		if err != nil {
 			return nil, err
 		}
 		line = strings.TrimRight(line, "\r\n")
-		
+
 		if firstLine == "" {
 			firstLine = line
 			if strings.HasPrefix(line, "{") || strings.HasPrefix(line, "[") {
@@ -337,11 +337,11 @@ func (s *stdioBackend) readFrame() ([]byte, error) {
 			}
 			headerMode = true
 		}
-		
+
 		if !headerMode {
 			return []byte(line), nil
 		}
-		
+
 		if line == "" {
 			break
 		}
@@ -350,7 +350,7 @@ func (s *stdioBackend) readFrame() ([]byte, error) {
 			cl, _ = strconv.Atoi(strings.TrimSpace(parts[1]))
 		}
 	}
-	
+
 	if cl <= 0 {
 		return nil, io.EOF
 	}
@@ -586,19 +586,19 @@ func (s *httpServer) routes() {
 			if host, _, err := net.SplitHostPort(clientIP); err == nil {
 				clientIP = host
 			}
-			
+
 			// 跳过认证的条件：
 			// 1. 来自127.0.0.1或::1
 			// 2. 带有X-Internal-Call: 1 header
-			skipAuth := clientIP == "127.0.0.1" || clientIP == "::1" || 
-					   r.Header.Get("X-Internal-Call") == "1"
-			
+			skipAuth := clientIP == "127.0.0.1" || clientIP == "::1" ||
+				r.Header.Get("X-Internal-Call") == "1"
+
 			if skipAuth {
 				// 跳过认证，直接处理请求
 				next(w, r)
 				return
 			}
-			
+
 			// 其他情况需要认证（这里可以添加OAuth逻辑）
 			next(w, r)
 		}
@@ -608,6 +608,7 @@ func (s *httpServer) routes() {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "tools": len(s.agg.tools), "ts": time.Now().Unix()})
 	})
+
 	s.mux.HandleFunc("/register", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -618,40 +619,90 @@ func (s *httpServer) routes() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok","message":"auth skipped for localhost"}`))
 	}))
-	
+
 	// 添加OAuth相关路径的通配符处理
 	s.mux.HandleFunc("/oauth/", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok","message":"oauth skipped for localhost"}`))
 	}))
-	
+
 	s.mux.HandleFunc("/token", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"access_token":"dummy","token_type":"Bearer"}`))
 	}))
-	
+
+	// MCP endpoint supports JSON-RPC over HTTP and minimal SSE for keep-alive / one-shot responses
 	s.mux.HandleFunc("/mcp", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		// If client requests SSE via GET + Accept: text/event-stream -> send heartbeat pings
+		if r.Method == http.MethodGet && wantsSSE(r) {
+			flusher, ok := beginSSE(w)
+			if !ok {
+				return
+			}
+			// initial comment line and periodic heartbeats
+			fmt.Fprint(w, ": ok\n\n")
+			flusher.Flush()
+			ticker := time.NewTicker(30 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-r.Context().Done():
+					return
+				case <-ticker.C:
+					fmt.Fprint(w, ": ping\n\n")
+					flusher.Flush()
+				}
+			}
+		}
+
 		if r.Method == http.MethodGet {
 			// Return empty response for Q CLI discovery
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
 		if r.Method != http.MethodPost {
 			http.Error(w, "GET or POST only", http.StatusMethodNotAllowed)
 			return
 		}
+
 		var req rpcReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32700, Message: "Parse error"}})
+			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32700, Message: "Parse error"}}
+			if wantsSSE(r) {
+				writeRPCSSE(w, resp)
+				return
+			}
+			writeRPC(w, resp)
 			return
 		}
+
 		switch req.Method {
 		case "initialize":
-			writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{"protocolVersion": "2024-11-05", "capabilities": map[string]any{"tools": map[string]any{}}, "serverInfo": map[string]any{"name": "mcp-http-bridge", "version": "0.3.0"}}})
+			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{
+				"protocolVersion": "2024-11-05",
+				"capabilities":    map[string]any{"tools": map[string]any{}},
+				"serverInfo":      map[string]any{"name": "mcp-http-bridge", "version": "0.3.0"},
+			}}
+			if wantsSSE(r) {
+				writeRPCSSE(w, resp)
+				return
+			}
+			writeRPC(w, resp)
+			return
+
 		case "tools/list":
-			writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{"tools": s.agg.ListExported()}})
+			tools := s.agg.ListExported()
+			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{"tools": tools}}
+			if wantsSSE(r) {
+				writeRPCSSE(w, resp)
+				return
+			}
+			writeRPC(w, resp)
+			return
+
 		case "tools/call":
 			var p struct {
 				Name      string         `json:"name"`
@@ -659,7 +710,12 @@ func (s *httpServer) routes() {
 			}
 			if len(req.Params) > 0 {
 				if err := json.Unmarshal(req.Params, &p); err != nil {
-					writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32602, Message: "Invalid params"}})
+					resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32602, Message: "Invalid params"}}
+					if wantsSSE(r) {
+						writeRPCSSE(w, resp)
+						return
+					}
+					writeRPC(w, resp)
 					return
 				}
 			}
@@ -667,18 +723,61 @@ func (s *httpServer) routes() {
 			defer cancel()
 			res, err := s.agg.Call(ctx, p.Name, p.Arguments)
 			if err != nil {
-				writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32000, Message: err.Error()}})
+				resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32000, Message: err.Error()}}
+				if wantsSSE(r) {
+					writeRPCSSE(w, resp)
+					return
+				}
+				writeRPC(w, resp)
 				return
 			}
-			writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Result: res})
+			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: res}
+			if wantsSSE(r) {
+				writeRPCSSE(w, resp)
+				return
+			}
+			writeRPC(w, resp)
+			return
+
 		default:
-			writeRPC(w, rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32601, Message: "Method not found"}})
+			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32601, Message: "Method not found"}}
+			if wantsSSE(r) {
+				writeRPCSSE(w, resp)
+				return
+			}
+			writeRPC(w, resp)
+			return
 		}
-	})
+	}))
 }
 func writeRPC(w http.ResponseWriter, resp rpcResp) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// SSE helpers
+func wantsSSE(r *http.Request) bool {
+	return strings.Contains(strings.ToLower(r.Header.Get("Accept")), "text/event-stream")
+}
+func beginSSE(w http.ResponseWriter) (http.Flusher, bool) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming not supported", http.StatusInternalServerError)
+		return nil, false
+	}
+	return flusher, true
+}
+func writeRPCSSE(w http.ResponseWriter, resp rpcResp) {
+	flusher, ok := beginSSE(w)
+	if !ok {
+		return
+	}
+	b, _ := json.Marshal(resp)
+	fmt.Fprintf(w, "data: %s\n\n", string(b))
+	flusher.Flush()
 }
 func (s *httpServer) serve(addr string) error {
 	httpSrv := &http.Server{Addr: addr, Handler: s.mux, ReadHeaderTimeout: 5 * time.Second}
