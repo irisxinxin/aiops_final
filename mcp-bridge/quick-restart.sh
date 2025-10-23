@@ -22,10 +22,14 @@ if command -v lsof >/dev/null 2>&1; then
     fi
 fi
 
-# 按进程名杀死
+# 按进程名杀死（排除当前脚本）
 if pgrep -f "mcp-bridge" >/dev/null 2>&1; then
     echo "   杀死名为 mcp-bridge 的进程"
-    sudo pkill -9 -f "mcp-bridge" || true
+    # 排除当前脚本进程
+    pids=$(pgrep -f "mcp-bridge" | grep -v $$ || true)
+    if [ -n "$pids" ]; then
+        echo "$pids" | xargs -r sudo kill -9 || true
+    fi
 fi
 
 # 等待进程完全停止
