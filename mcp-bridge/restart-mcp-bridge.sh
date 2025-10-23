@@ -82,7 +82,7 @@ INIT_RETRY=8
 ENV
 
 # 更新 systemd 服务文件
-sudo tee /etc/systemd/system/mcp-bridge.service >/dev/null <<'UNIT'
+sudo tee /etc/systemd/system/mcp-bridge.service >/dev/null <<UNIT
 [Unit]
 Description=HTTP MCP Bridge (preheated MCP tools)
 Wants=network-online.target
