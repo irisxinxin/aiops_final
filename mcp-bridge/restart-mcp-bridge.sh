@@ -51,6 +51,12 @@ install -m 0644 ./go.mod "$WORK_DIR/go.mod"
 install -m 0644 ./main.go "$WORK_DIR/main.go"
 install -m 0644 ./mcp.json "$WORK_DIR/mcp.json"
 
+# 复制wrapper脚本
+install -m 0755 ./vm-mcp-wrapper.py "$WORK_DIR/vm-mcp-wrapper.py"
+install -m 0755 ./cloudwatch-wrapper.py "$WORK_DIR/cloudwatch-wrapper.py"
+install -m 0755 ./elasticsearch-wrapper.py "$WORK_DIR/elasticsearch-wrapper.py"
+install -m 0755 ./stdio-wrapper.py "$WORK_DIR/stdio-wrapper.py"
+
 # 编译
 cd "$WORK_DIR"
 go build -o mcp-bridge .
