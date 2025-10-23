@@ -1,0 +1,16 @@
+2025/10/23 06:32:57 [bridge] loading /home/ubuntu/huixin/aiops_final/mcp-bridge/mcp-simple.json
+2025/10/23 06:32:57 [victoriametrics] spawn stdio: python3 /usr/local/bin/vm-mcp-wrapper.py
+2025/10/23 06:32:57 [victoriametrics] ready, tools: 1
+2025/10/23 06:32:57 [cloudwatch] spawn stdio: python3 ./cloudwatch-wrapper.py
+2025/10/23 06:32:58 [cloudwatch][stderr] 2025-10-23 06:32:58.499 | INFO     | awslabs.cloudwatch_mcp_server.server:<module>:37 - CloudWatch Logs tools registered successfully
+2025/10/23 06:32:58 [cloudwatch][stderr] 2025-10-23 06:32:58.502 | INFO     | awslabs.cloudwatch_mcp_server.cloudwatch_metrics.tools:_load_and_index_metadata:87 - Loaded 1179 metric metadata entries
+2025/10/23 06:32:58 [cloudwatch][stderr] 2025-10-23 06:32:58.503 | INFO     | awslabs.cloudwatch_mcp_server.cloudwatch_metrics.tools:_load_and_index_metadata:111 - Successfully indexed 1179 metric metadata entries
+2025/10/23 06:32:58 [cloudwatch][stderr] 2025-10-23 06:32:58.503 | INFO     | awslabs.cloudwatch_mcp_server.cloudwatch_metrics.tools:__init__:50 - Loaded 1179 metric metadata entries
+2025/10/23 06:32:58 [cloudwatch][stderr] 2025-10-23 06:32:58.513 | INFO     | awslabs.cloudwatch_mcp_server.server:<module>:40 - CloudWatch Metrics tools registered successfully
+2025/10/23 06:32:58 [cloudwatch][stderr] 2025-10-23 06:32:58.526 | INFO     | awslabs.cloudwatch_mcp_server.server:<module>:43 - CloudWatch Alarms tools registered successfully
+2025/10/23 06:32:58 [cloudwatch][stderr] [10/23/25 06:32:58] INFO     Processing request of type            server.py:672
+2025/10/23 06:32:58 [cloudwatch][stderr]                              ListToolsRequest                                   
+2025/10/23 06:32:58 [cloudwatch] ready, tools: 10
+2025/10/23 06:32:58 [elasticsearch] spawn stdio: python3 ./elasticsearch-wrapper.py
+2025/10/23 06:33:03 [elasticsearch] ready, tools: 4
+2025/10/23 06:33:03 [bridge] listening on 0.0.0.0:7012

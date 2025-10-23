@@ -1,91 +1,23 @@
 {
   "mcpServers": {
     "victoriametrics": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "VM_INSTANCE_ENTRYPOINT",
-        "-e",
-        "VM_INSTANCE_TYPE",
-        "-e",
-        "VM_INSTANCE_BEARER_TOKEN",
-        "ghcr.io/victoriametrics-community/mcp-victoriametrics"
-      ],
+      "command": "python3",
+      "args": ["./vm-mcp-wrapper.py"],
       "env": {
-        "VM_INSTANCE_ENTRYPOINT": "http://aps1-vm-internal-1.beta.tplinknbu.com/",
-        "VM_INSTANCE_TYPE": "cluster",
-        "VM_INSTANCE_BEARER_TOKEN": ""
+        "VM_INSTANCE_ENTRYPOINT": "http://aps1-vm-internal-1.beta.tplinknbu.com/select/0/prometheus/"
       }
     },
-    "elasticsearch-mcp-server": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "ES_URL=https://10.53.147.74:9200",
-        "-e",
-        "ES_USERNAME=elastic",
-        "-e",
-        "ES_LOGIN=elastic",
-        "-e",
-        "ES_PASSWORD=NBU_cpavhmbSGadmin2018!",
-        "-e",
-        "ES_SSL_SKIP_VERIFY",
-        "docker.elastic.co/mcp/elasticsearch:0.3.1",
-        "stdio"
-      ],
+    "cloudwatch": {
+      "command": "python3",
+      "args": ["./cloudwatch-wrapper.py"],
       "env": {
-        "ES_SSL_SKIP_VERIFY": "true"
+        "AWS_DEFAULT_REGION": "ap-southeast-1"
       }
     },
-    "awslabs.cloudwatch-mcp-server": {
-      "autoApprove": [],
-      "disabled": false,
-      "command": "uvx",
-      "args": [
-        "awslabs.cloudwatch-mcp-server@latest"
-      ],
-      "env": {
-        "FASTMCP_LOG_LEVEL": "ERROR"
-      },
-      "transportType": "stdio"
-    },
-    "alertmanager": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "--network=host",
-        "-e",
-        "ALERTMANAGER_URL=http://aps1-alertmanager-internal.beta.tplinknbu.com",
-        "ghcr.io/kaznak/alertmanager-mcp:latest"
-      ],
+    "elasticsearch": {
+      "command": "python3",
+      "args": ["./elasticsearch-wrapper.py"],
       "env": {}
-    },
-    "awslabs.eks-mcp-server": {
-      "command": "uvx",
-      "args": [
-        "awslabs.eks-mcp-server@latest"
-      ],
-      "env": {
-        "FASTMCP_LOG_LEVEL": "INFO"
-      },
-      "autoApprove": [
-        "list_k8s_resources",
-        "get_pod_logs",
-        "get_k8s_events",
-        "get_cloudwatch_logs",
-        "get_cloudwatch_metrics",
-        "get_policies_for_role",
-        "search_eks_troubleshoot_guide",
-        "list_api_versions"
-      ]
     }
   }
 }

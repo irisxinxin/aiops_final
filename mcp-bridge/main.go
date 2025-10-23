@@ -203,7 +203,17 @@ func newStdioBackend(name string, s SrvSpec) (*stdioBackend, error) {
 func (s *stdioBackend) Name() string { return s.name }
 func (s *stdioBackend) Initialize(ctx context.Context) error {
 	go s.readLoop()
-	_, err := s.rpc(ctx, "initialize", map[string]any{})
+	params := map[string]any{
+		"protocolVersion": "2024-11-05",
+		"capabilities": map[string]any{
+			"tools": map[string]any{},
+		},
+		"clientInfo": map[string]any{
+			"name":    "mcp-bridge",
+			"version": "0.3.0",
+		},
+	}
+	_, err := s.rpc(ctx, "initialize", params)
 	return err
 }
 func (s *stdioBackend) ListTools(ctx context.Context) ([]ToolItem, error) {
@@ -309,12 +319,28 @@ func (s *stdioBackend) readLoop() {
 }
 func (s *stdioBackend) readFrame() ([]byte, error) {
 	cl := 0
+	var firstLine string
+	headerMode := false
+	
 	for {
 		line, err := s.reader.ReadString('\n')
 		if err != nil {
 			return nil, err
 		}
 		line = strings.TrimRight(line, "\r\n")
+		
+		if firstLine == "" {
+			firstLine = line
+			if strings.HasPrefix(line, "{") || strings.HasPrefix(line, "[") {
+				return []byte(line), nil
+			}
+			headerMode = true
+		}
+		
+		if !headerMode {
+			return []byte(line), nil
+		}
+		
 		if line == "" {
 			break
 		}
@@ -323,6 +349,7 @@ func (s *stdioBackend) readFrame() ([]byte, error) {
 			cl, _ = strconv.Atoi(strings.TrimSpace(parts[1]))
 		}
 	}
+	
 	if cl <= 0 {
 		return nil, io.EOF
 	}
@@ -355,7 +382,17 @@ func newHTTPBackend(name string, sp SrvSpec) (*httpBackend, error) {
 }
 func (h *httpBackend) Name() string { return h.name }
 func (h *httpBackend) Initialize(ctx context.Context) error {
-	_, err := h.rpc(ctx, "initialize", map[string]any{})
+	params := map[string]any{
+		"protocolVersion": "2024-11-05",
+		"capabilities": map[string]any{
+			"tools": map[string]any{},
+		},
+		"clientInfo": map[string]any{
+			"name":    "mcp-bridge",
+			"version": "0.3.0",
+		},
+	}
+	_, err := h.rpc(ctx, "initialize", params)
 	return err
 }
 func (h *httpBackend) ListTools(ctx context.Context) ([]ToolItem, error) {
@@ -418,8 +455,12 @@ func NewAggregator() *Aggregator {
 	return &Aggregator{backends: map[string]Backend{}, tools: map[string][2]string{}}
 }
 func (a *Aggregator) StartFromConfig(c *Config) error {
-	if c == nil || len(c.Servers) == 0 {
-		return fmt.Errorf("mcp.json missing mcpServers")
+	if c == nil {
+		return fmt.Errorf("config is nil")
+	}
+	if len(c.Servers) == 0 {
+		log.Printf("[bridge] no MCP servers configured, starting with empty aggregator")
+		return nil
 	}
 	for raw, sp := range c.Servers {
 		if sp.Disabled {

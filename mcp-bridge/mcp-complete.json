@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "victoriametrics": {
+      "command": "python3",
+      "args": ["/usr/local/bin/vm-mcp-wrapper.py"],
+      "env": {
+        "VM_INSTANCE_ENTRYPOINT": "http://aps1-vm-internal-1.beta.tplinknbu.com/select/0/prometheus/"
+      }
+    },
+    "cloudwatch": {
+      "command": "python3",
+      "args": ["./cloudwatch-wrapper.py"],
+      "env": {
+        "AWS_DEFAULT_REGION": "ap-southeast-1"
+      }
+    },
+    "elasticsearch": {
+      "command": "python3",
+      "args": ["./elasticsearch-wrapper.py"],
+      "env": {}
+    }
+  }
+}
