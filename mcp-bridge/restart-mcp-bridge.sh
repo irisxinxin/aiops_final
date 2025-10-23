@@ -18,7 +18,6 @@ echo "💀 杀死旧进程..."
 
 # 按端口杀死进程
 if command -v lsof >/dev/null 2>&1; then
-    local pids
     pids=$(lsof -ti tcp:"$PORT" 2>/dev/null || true)
     if [ -n "$pids" ]; then
         echo "   杀死端口 $PORT 上的进程: $pids"
