@@ -1,0 +1,19 @@
+[Unit]
+Description=HTTP MCP Bridge (preheated MCP tools)
+Wants=network-online.target
+After=network-online.target docker.socket
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/mcp-bridge
+EnvironmentFile=-/etc/default/mcp-bridge
+ExecStart=/opt/mcp-bridge/mcp-bridge
+Restart=on-failure
+RestartSec=2s
+User=root
+Group=root
+NoNewPrivileges=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+[Unit]
+Description=QProxy (AIOps prompt renderer)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/qproxy
+EnvironmentFile=-/etc/default/qproxy
+ExecStart=/opt/qproxy/bin/qproxy
+Restart=on-failure
+RestartSec=2s
+User=root
+Group=root
+NoNewPrivileges=true
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

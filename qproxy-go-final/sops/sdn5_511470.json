@@ -1,0 +1,12 @@
+{
+  "id": "511470",
+  "title": "sdn5 CPU critical SOP",
+  "description": "Render VM expression and inspect pod status via EKS MCP",
+  "required_params": ["expression"],
+  "defaults": {
+  },
+  "template": "使用 victoriametrics MCP 查询: {{.Params.expression}}\n使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态\n查询 container_cpu_usage_seconds_total 时间序列\n",
+  "expected_source": "mcp:victoriametrics"
+}
+
+

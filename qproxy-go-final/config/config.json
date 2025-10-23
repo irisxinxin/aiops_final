@@ -1,0 +1,11 @@
+{
+  "q_bin": "q",
+  "q_args": [
+    "ask"
+  ],
+  "mcp_env": {
+    "MCP_BRIDGE_URL": "http://127.0.0.1:7011",
+    "MCP_ENABLED": "1",
+    "MCP_SERVER_URL": "http://127.0.0.1:7011"
+  }
+}

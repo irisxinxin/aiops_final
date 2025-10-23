@@ -1,0 +1,13 @@
+使用 victoriametrics MCP 查询: sum(up)
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
