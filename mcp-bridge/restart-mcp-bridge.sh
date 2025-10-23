@@ -6,7 +6,7 @@ echo "🚀 开始重启 mcp-bridge 服务..."
 # 配置
 SERVICE_NAME="mcp-bridge"
 PORT="7011"
-WORK_DIR="/opt/mcp-bridge"
+PROJECT_DIR="/home/ubuntu/huixin/aiops_final/mcp-bridge"
 BIN_PATH="/usr/local/bin/mcp-bridge"
 
 # 1. 停止 systemctl 服务
@@ -42,28 +42,28 @@ sleep 2
 echo "🔨 重新编译并安装..."
 cd "$(dirname "$0")"
 
-# 确保工作目录存在
-sudo mkdir -p "$WORK_DIR" /etc/mcp
-sudo chown -R "$(whoami):$(whoami)" "$WORK_DIR"
+# 确保项目目录存在
+sudo mkdir -p "$PROJECT_DIR" /etc/mcp
+sudo chown -R "$(whoami):$(whoami)" "$PROJECT_DIR"
 
-# 复制文件到工作目录
-install -m 0644 ./go.mod "$WORK_DIR/go.mod"
-install -m 0644 ./main.go "$WORK_DIR/main.go"
-install -m 0644 ./mcp.json "$WORK_DIR/mcp.json"
+# 复制文件到项目目录
+install -m 0644 ./go.mod "$PROJECT_DIR/go.mod"
+install -m 0644 ./main.go "$PROJECT_DIR/main.go"
+install -m 0644 ./mcp.json "$PROJECT_DIR/mcp.json"
 
 # 复制wrapper脚本
-install -m 0755 ./vm-mcp-wrapper.py "$WORK_DIR/vm-mcp-wrapper.py"
-install -m 0755 ./cloudwatch-wrapper.py "$WORK_DIR/cloudwatch-wrapper.py"
-install -m 0755 ./elasticsearch-wrapper.py "$WORK_DIR/elasticsearch-wrapper.py"
-install -m 0755 ./stdio-wrapper.py "$WORK_DIR/stdio-wrapper.py"
+install -m 0755 ./vm-mcp-wrapper.py "$PROJECT_DIR/vm-mcp-wrapper.py"
+install -m 0755 ./cloudwatch-wrapper.py "$PROJECT_DIR/cloudwatch-wrapper.py"
+install -m 0755 ./elasticsearch-wrapper.py "$PROJECT_DIR/elasticsearch-wrapper.py"
+install -m 0755 ./stdio-wrapper.py "$PROJECT_DIR/stdio-wrapper.py"
 
 # 编译
-cd "$WORK_DIR"
+cd "$PROJECT_DIR"
 go build -o mcp-bridge .
 
 # 安装到系统路径
 sudo install -m 0755 mcp-bridge "$BIN_PATH"
-sudo install -m 0644 "$WORK_DIR/mcp.json" /etc/mcp/mcp.json
+sudo install -m 0644 "$PROJECT_DIR/mcp.json" /etc/mcp/mcp.json
 
 # 更新环境配置
 sudo tee /etc/default/mcp-bridge >/dev/null <<'ENV'
@@ -83,6 +83,7 @@ After=network-online.target docker.socket
 
 [Service]
 Type=simple
+WorkingDirectory=$PROJECT_DIR
 EnvironmentFile=-/etc/default/mcp-bridge
 ExecStart=/usr/local/bin/mcp-bridge
 Restart=on-failure
