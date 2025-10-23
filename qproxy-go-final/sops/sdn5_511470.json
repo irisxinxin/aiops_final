@@ -5,7 +5,7 @@
   "required_params": ["expression"],
   "defaults": {
   },
-  "template": "使用 victoriametrics MCP 查询: {{.Params.expression}}\n使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态\n查询 container_cpu_usage_seconds_total 时间序列\n",
+  "template": "# AIOps Root Cause Analysis Task\n\nAnalyze this alert and provide root cause analysis:\n\nAlert Expression: {{.Params.expression}}\nService: sdn5\nContainer: omada-device-gateway\nNamespace: sdn5\n\nYou are an AIOps root cause analysis assistant. Your role is to:\n1. Use victoriametrics MCP tools to query the provided expression\n2. Use cloudwatch MCP tools to check related AWS metrics\n3. Analyze the data and provide root cause attribution\n4. Provide actionable recommendations\n\nIMPORTANT: Your response must contain ONLY the final JSON result in this exact format:\n\n{\n  \"tool_calls\": [\n    {\n      \"tool\": \"victoriametrics\",\n      \"action\": \"query\",\n      \"query\": \"actual query used\",\n      \"result\": \"summary of result\"\n    }\n  ],\n  \"root_cause\": \"likely root cause based on metrics analysis\",\n  \"evidence\": [\"evidence item 1\", \"evidence item 2\"],\n  \"confidence\": 0.85,\n  \"suggested_actions\": [\"action 1\", \"action 2\"],\n  \"analysis_summary\": \"brief summary of investigation\"\n}\n\nStart analysis immediately using available MCP tools.",
   "expected_source": "mcp:victoriametrics"
 }
 

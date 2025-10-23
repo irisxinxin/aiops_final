@@ -103,3 +103,633 @@
 1) "verdict" 只能是 "ok" 或 "fail"；
 2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
 3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 12:41:39]
+使用 victoriametrics MCP 查询: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 12:45:49]
+使用 victoriametrics MCP 查询: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 12:47:48]
+使用 victoriametrics MCP 查询: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 12:54:32]
+使用 victoriametrics MCP 查询: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 12:56:29]
+使用 victoriametrics MCP 查询: up
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 12:58:57]
+使用 victoriametrics MCP 查询: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+使用 awslabseks_mcp_server 检查 omada-device-gateway Pod 状态
+查询 container_cpu_usage_seconds_total 时间序列
+
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:06:34]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:08:34]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:09:07]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:13:19]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:14:06]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:17:21]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 13:37:29]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 14:05:03]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 14:10:34]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 14:15:05]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: up
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 14:17:56]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-23 14:24:41]
+# AIOps Root Cause Analysis Task
+
+Analyze this alert and provide root cause analysis:
+
+Alert Expression: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="", container!="istio-proxy", image!="",pod=~"omada-device-gateway.*", namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*", namespace=~"sdn5", resource="cpu"} > 0) by (pod, container)>0.9
+Service: sdn5
+Container: omada-device-gateway
+Namespace: sdn5
+
+You are an AIOps root cause analysis assistant. Your role is to:
+1. Use victoriametrics MCP tools to query the provided expression
+2. Use cloudwatch MCP tools to check related AWS metrics
+3. Analyze the data and provide root cause attribution
+4. Provide actionable recommendations
+
+IMPORTANT: Your response must contain ONLY the final JSON result in this exact format:
+
+{
+  "tool_calls": [
+    {
+      "tool": "victoriametrics",
+      "action": "query",
+      "query": "actual query used",
+      "result": "summary of result"
+    }
+  ],
+  "root_cause": "likely root cause based on metrics analysis",
+  "evidence": ["evidence item 1", "evidence item 2"],
+  "confidence": 0.85,
+  "suggested_actions": ["action 1", "action 2"],
+  "analysis_summary": "brief summary of investigation"
+}
+
+Start analysis immediately using available MCP tools.
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。

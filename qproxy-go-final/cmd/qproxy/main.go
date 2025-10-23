@@ -491,16 +491,17 @@ func (s *Server) validateParams(sop *SOP, params map[string]string) ValidationRe
 // (duplicate removed) Server/NewServer
 
 func (s *Server) runQ(ctx context.Context, resumeDir, prompt string) (string, string, error) {
-	args := make([]string, 0, len(s.cfg.QArgs)+6+1)
+	args := make([]string, 0, len(s.cfg.QArgs)+5)
 	args = append(args, s.cfg.QArgs...)
-	args = append(args, "--trust-all", "--no-interactive", "--resume", resumeDir)
-	args = append(args, prompt)
+	args = append(args, "--agent", "remote-mcp", "--no-interactive", "--trust-all-tools")
 
 	cmd := exec.CommandContext(ctx, s.cfg.QBin, args...)
 	cmd.Env = os.Environ()
 	for k, v := range s.cfg.MCPEng {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
+	
+	cmd.Stdin = strings.NewReader(prompt)
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
 	cmd.Stderr = &errBuf

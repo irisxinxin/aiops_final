@@ -1,7 +1,7 @@
 {
   "q_bin": "q",
   "q_args": [
-    "ask"
+    "chat"
   ],
   "mcp_env": {
     "MCP_BRIDGE_URL": "http://127.0.0.1:7011",

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -577,13 +578,68 @@ func newHTTP(agg *Aggregator) *httpServer {
 	return s
 }
 func (s *httpServer) routes() {
+	// 认证跳过中间件
+	authSkipMiddleware := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			// 检查是否来自本机
+			clientIP := r.RemoteAddr
+			if host, _, err := net.SplitHostPort(clientIP); err == nil {
+				clientIP = host
+			}
+			
+			// 跳过认证的条件：
+			// 1. 来自127.0.0.1或::1
+			// 2. 带有X-Internal-Call: 1 header
+			skipAuth := clientIP == "127.0.0.1" || clientIP == "::1" || 
+					   r.Header.Get("X-Internal-Call") == "1"
+			
+			if skipAuth {
+				// 跳过认证，直接处理请求
+				next(w, r)
+				return
+			}
+			
+			// 其他情况需要认证（这里可以添加OAuth逻辑）
+			next(w, r)
+		}
+	}
+
 	s.mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "tools": len(s.agg.tools), "ts": time.Now().Unix()})
 	})
-	s.mux.HandleFunc("/mcp", func(w http.ResponseWriter, r *http.Request) {
+	s.mux.HandleFunc("/register", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","message":"registration successful"}`))
+	}))
+	s.mux.HandleFunc("/authorize", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","message":"auth skipped for localhost"}`))
+	}))
+	
+	// 添加OAuth相关路径的通配符处理
+	s.mux.HandleFunc("/oauth/", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","message":"oauth skipped for localhost"}`))
+	}))
+	
+	s.mux.HandleFunc("/token", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"access_token":"dummy","token_type":"Bearer"}`))
+	}))
+	
+	s.mux.HandleFunc("/mcp", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			// Return empty response for Q CLI discovery
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		if r.Method != http.MethodPost {
-			http.Error(w, "POST only", http.StatusMethodNotAllowed)
+			http.Error(w, "GET or POST only", http.StatusMethodNotAllowed)
 			return
 		}
 		var req rpcReq

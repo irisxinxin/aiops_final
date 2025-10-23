@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aws/amazon-q-developer-cli/refs/heads/main/schemas/agent-v1.json",
+  "name": "aiops",
+  "description": "AIOps agent with MCP bridge support",
+  "prompt": null,
+  "mcpServers": {
+    "test-mcp": {
+      "type": "stdio",
+      "url": "",
+      "headers": {},
+      "oauthScopes": [
+        "openid",
+        "email",
+        "profile",
+        "offline_access"
+      ],
+      "command": "python3",
+      "args": [
+        "/home/ubuntu/huixin/aiops_final/mcp-bridge/test-mcp.py"
+      ],
+      "env": {},
+      "timeout": 120000,
+      "disabled": false
+    },
+    "mcp-bridge": {
+      "type": "stdio",
+      "url": "",
+      "headers": {},
+      "oauthScopes": [
+        "openid",
+        "email",
+        "profile",
+        "offline_access"
+      ],
+      "command": "python3",
+      "args": [
+        "/home/ubuntu/huixin/aiops_final/mcp-bridge/stdio-wrapper.py"
+      ],
+      "env": {},
+      "timeout": 120000,
+      "disabled": false
+    }
+  },
+  "tools": [
+    "*"
+  ],
+  "toolAliases": {},
+  "allowedTools": [],
+  "resources": [],
+  "hooks": {},
+  "toolsSettings": {},
+  "useLegacyMcpJson": false,
+  "model": null
+}
