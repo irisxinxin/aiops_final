@@ -46,24 +46,31 @@ cd "$(dirname "$0")"
 sudo mkdir -p "$PROJECT_DIR" /etc/mcp
 sudo chown -R "$(whoami):$(whoami)" "$PROJECT_DIR"
 
-# 复制文件到项目目录
-install -m 0644 ./go.mod "$PROJECT_DIR/go.mod"
-install -m 0644 ./main.go "$PROJECT_DIR/main.go"
-install -m 0644 ./mcp.json "$PROJECT_DIR/mcp.json"
-
-# 复制wrapper脚本
-install -m 0755 ./vm-mcp-wrapper.py "$PROJECT_DIR/vm-mcp-wrapper.py"
-install -m 0755 ./cloudwatch-wrapper.py "$PROJECT_DIR/cloudwatch-wrapper.py"
-install -m 0755 ./elasticsearch-wrapper.py "$PROJECT_DIR/elasticsearch-wrapper.py"
-install -m 0755 ./stdio-wrapper.py "$PROJECT_DIR/stdio-wrapper.py"
+# 如果不在项目目录，则复制文件
+if [ "$(pwd)" != "$PROJECT_DIR" ]; then
+    echo "   复制文件到项目目录..."
+    install -m 0644 ./go.mod "$PROJECT_DIR/go.mod"
+    install -m 0644 ./main.go "$PROJECT_DIR/main.go"
+    install -m 0644 ./mcp.json "$PROJECT_DIR/mcp.json"
+    
+    # 复制wrapper脚本
+    install -m 0755 ./vm-mcp-wrapper.py "$PROJECT_DIR/vm-mcp-wrapper.py"
+    install -m 0755 ./cloudwatch-wrapper.py "$PROJECT_DIR/cloudwatch-wrapper.py"
+    install -m 0755 ./elasticsearch-wrapper.py "$PROJECT_DIR/elasticsearch-wrapper.py"
+    install -m 0755 ./stdio-wrapper.py "$PROJECT_DIR/stdio-wrapper.py"
+    
+    # 切换到项目目录
+    cd "$PROJECT_DIR"
+else
+    echo "   已在项目目录，直接编译..."
+fi
 
 # 编译
-cd "$PROJECT_DIR"
 go build -o mcp-bridge .
 
 # 安装到系统路径
 sudo install -m 0755 mcp-bridge "$BIN_PATH"
-sudo install -m 0644 "$PROJECT_DIR/mcp.json" /etc/mcp/mcp.json
+sudo install -m 0644 mcp.json /etc/mcp/mcp.json
 
 # 更新环境配置
 sudo tee /etc/default/mcp-bridge >/dev/null <<'ENV'
