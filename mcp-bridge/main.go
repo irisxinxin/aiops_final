@@ -633,18 +633,15 @@ func (s *httpServer) routes() {
 		w.Write([]byte(`{"access_token":"dummy","token_type":"Bearer"}`))
 	}))
 
-	// MCP endpoint supports JSON-RPC over HTTP and minimal SSE for keep-alive / one-shot responses
-	s.mux.HandleFunc("/mcp", authSkipMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		// /mcp
+	s.mux.HandleFunc("/mcp", func(w http.ResponseWriter, r *http.Request) {
+		// --- GET + SSE 探测：必须返回纯文本路径 ---
 		if r.Method == http.MethodGet && wantsSSE(r) {
-			// 兼容旧回退：第一条发 endpoint 事件
 			flusher, ok := beginSSE(w)
-			if !ok {
-				return
+			if !ok { 
+				return 
 			}
-			fmt.Fprintf(w, "event: endpoint\n")
-			fmt.Fprintf(w, "data: {\"endpoint\":\"/mcp\"}\n\n")
-			flusher.Flush()
+			// FIX: endpoint 事件的 data 必须是纯文本 "/mcp"
+			sendSSERaw(w, flusher, "endpoint", "/mcp")
 			// 心跳可选
 			ticker := time.NewTicker(30 * time.Second)
 			defer ticker.Stop()
@@ -658,50 +655,50 @@ func (s *httpServer) routes() {
 				}
 			}
 		}
-
 		if r.Method != http.MethodPost {
 			http.Error(w, "POST only", http.StatusMethodNotAllowed)
 			return
 		}
-
 		var req rpcReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			// 按 Accept 协商（SSE/JSON）返回解析错误
 			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32700, Message: "Parse error"}}
-			if wantsSSE(r) {
+			if wantsSSE(r) { 
 				writeRPCSSE(w, resp)
-				return
+				return 
 			}
-			writeRPCJSON(w, resp)
+			writeRPC(w, resp)
 			return
 		}
-
-		// 示例：initialize
-		if req.Method == "initialize" {
+		// --- FIX: JSON-RPC notification（无 id）不得返回 JSON-RPC 响应 ---
+		if len(bytes.TrimSpace(req.ID)) == 0 {
+			w.WriteHeader(http.StatusNoContent) // 204，无响应体
+			return
+		}
+		switch req.Method {
+		case "initialize":
+			// 其余保持你原有逻辑；如有 SSE，记得用 writeRPCSSE 返回
 			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{
 				"protocolVersion": "2025-06-18",
 				"capabilities":    map[string]any{"tools": map[string]any{}},
 				"serverInfo":      map[string]any{"name": "mcp-http-bridge", "version": "0.3.0"},
 			}}
-			if wantsSSE(r) {
+			if wantsSSE(r) { 
 				writeRPCSSE(w, resp)
-				return
+				return 
 			}
-			writeRPCJSON(w, resp)
+			writeRPC(w, resp)
 			return
-		}
-
-		if req.Method == "tools/list" {
+		case "tools/list":
 			tools := s.agg.ListExported()
 			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{"tools": tools}}
-			if wantsSSE(r) {
+			if wantsSSE(r) { 
 				writeRPCSSE(w, resp)
-				return
+				return 
 			}
-			writeRPCJSON(w, resp)
+			writeRPC(w, resp)
 			return
-		}
-
-		if req.Method == "tools/call" {
+		case "tools/call":
 			var p struct {
 				Name      string         `json:"name"`
 				Arguments map[string]any `json:"arguments"`
@@ -709,11 +706,11 @@ func (s *httpServer) routes() {
 			if len(req.Params) > 0 {
 				if err := json.Unmarshal(req.Params, &p); err != nil {
 					resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32602, Message: "Invalid params"}}
-					if wantsSSE(r) {
+					if wantsSSE(r) { 
 						writeRPCSSE(w, resp)
-						return
+						return 
 					}
-					writeRPCJSON(w, resp)
+					writeRPC(w, resp)
 					return
 				}
 			}
@@ -722,34 +719,45 @@ func (s *httpServer) routes() {
 			res, err := s.agg.Call(ctx, p.Name, p.Arguments)
 			if err != nil {
 				resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32000, Message: err.Error()}}
-				if wantsSSE(r) {
+				if wantsSSE(r) { 
 					writeRPCSSE(w, resp)
-					return
+					return 
 				}
-				writeRPCJSON(w, resp)
+				writeRPC(w, resp)
 				return
 			}
 			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: res}
-			if wantsSSE(r) {
+			if wantsSSE(r) { 
 				writeRPCSSE(w, resp)
-				return
+				return 
 			}
-			writeRPCJSON(w, resp)
+			writeRPC(w, resp)
+			return
+		default:
+			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32601, Message: "Method not found"}}
+			if wantsSSE(r) { 
+				writeRPCSSE(w, resp)
+				return 
+			}
+			writeRPC(w, resp)
 			return
 		}
-
-		// 默认情况
-		resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32601, Message: "Method not found"}}
-		if wantsSSE(r) {
-			writeRPCSSE(w, resp)
-		} else {
-			writeRPCJSON(w, resp)
-		}
-	}))
+	})
 }
 func writeRPC(w http.ResponseWriter, resp rpcResp) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// --- 新增：发送"原始文本"的 SSE 事件（不做 JSON 编码） ---
+func sendSSERaw(w http.ResponseWriter, flusher http.Flusher, event, raw string) {
+	if event == "" { 
+		event = "message" 
+	}
+	fmt.Fprintf(w, "event: %s\n", event)
+	// 关键：这里直接写纯文本路径，不包引号、不做 JSON
+	fmt.Fprintf(w, "data: %s\n\n", strings.TrimRight(raw, "\n"))
+	flusher.Flush()
 }
 
 // SSE helpers
