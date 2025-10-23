@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "mcp-bridge": {
-      "url": "http://localhost:7011/mcp",
-      "transportType": "http"
-    }
-  }
-}
