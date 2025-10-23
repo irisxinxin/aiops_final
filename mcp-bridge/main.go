@@ -634,113 +634,115 @@ func (s *httpServer) routes() {
 	}))
 
 	s.mux.HandleFunc("/mcp", func(w http.ResponseWriter, r *http.Request) {
-		// --- GET + SSE 探测：必须返回纯文本路径 ---
-		if r.Method == http.MethodGet && wantsSSE(r) {
-			flusher, ok := beginSSE(w)
+		switch r.Method {
+		case http.MethodGet:
+			// 长连（Server -> Client）SSE 通道；兼容老示例，先发 endpoint 事件
+			fl, ok := sseHeaders(w)
 			if !ok { 
+				http.Error(w, "streaming unsupported", http.StatusInternalServerError)
 				return 
 			}
-			// FIX: endpoint 事件的 data 必须是纯文本 "/mcp"
-			sendSSERaw(w, flusher, "endpoint", "/mcp")
-			// 心跳可选
-			ticker := time.NewTicker(30 * time.Second)
+			// 兼容老客户端/文档：告知消息端点（你就是 /mcp）
+			writeSSEEvent(w, fl, "endpoint", "/mcp")
+			// keepalive，避免某些代理/客户端断开
+			ticker := time.NewTicker(25 * time.Second)
 			defer ticker.Stop()
 			for {
 				select {
 				case <-r.Context().Done():
 					return
 				case <-ticker.C:
-					fmt.Fprint(w, ": ping\n\n")
-					flusher.Flush()
+					fmt.Fprint(w, ":keepalive\n\n")
+					fl.Flush()
 				}
 			}
-		}
-		if r.Method != http.MethodPost {
-			http.Error(w, "POST only", http.StatusMethodNotAllowed)
-			return
-		}
-		var req rpcReq
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			// 按 Accept 协商（SSE/JSON）返回解析错误
-			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32700, Message: "Parse error"}}
-			if wantsSSE(r) { 
-				writeRPCSSE(w, resp)
-				return 
-			}
-			writeRPC(w, resp)
-			return
-		}
-		// --- FIX: JSON-RPC notification（无 id）不得返回 JSON-RPC 响应 ---
-		if len(bytes.TrimSpace(req.ID)) == 0 {
-			w.WriteHeader(http.StatusNoContent) // 204，无响应体
-			return
-		}
-		switch req.Method {
-		case "initialize":
-			// 其余保持你原有逻辑；如有 SSE，记得用 writeRPCSSE 返回
-			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{
-				"protocolVersion": "2025-06-18",
-				"capabilities":    map[string]any{"tools": map[string]any{}},
-				"serverInfo":      map[string]any{"name": "mcp-http-bridge", "version": "0.3.0"},
-			}}
-			if wantsSSE(r) { 
-				writeRPCSSE(w, resp)
-				return 
-			}
-			writeRPC(w, resp)
-			return
-		case "tools/list":
-			tools := s.agg.ListExported()
-			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: map[string]any{"tools": tools}}
-			if wantsSSE(r) { 
-				writeRPCSSE(w, resp)
-				return 
-			}
-			writeRPC(w, resp)
-			return
-		case "tools/call":
-			var p struct {
-				Name      string         `json:"name"`
-				Arguments map[string]any `json:"arguments"`
-			}
-			if len(req.Params) > 0 {
-				if err := json.Unmarshal(req.Params, &p); err != nil {
-					resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32602, Message: "Invalid params"}}
-					if wantsSSE(r) { 
-						writeRPCSSE(w, resp)
-						return 
-					}
-					writeRPC(w, resp)
-					return
+
+		case http.MethodPost:
+			// 读取一条 JSON-RPC 消息
+			var req rpcReq
+			dec := json.NewDecoder(r.Body)
+			if err := dec.Decode(&req); err != nil {
+				// Q CLI 对 content-type 比较挑剔：当 Accept 含 SSE 时，用 SSE 回错误更稳妥
+				if wantsSSE(r) {
+					writeSSEMessage(w, map[string]any{
+						"jsonrpc": "2.0",
+						"error":   map[string]any{"code": -32700, "message": "Parse error"},
+					})
+				} else {
+					writeJSON(w, rpcResp{JSONRPC: "2.0", Error: &rpcErr{Code: -32700, Message: "Parse error"}})
 				}
-			}
-			ctx, cancel := context.WithTimeout(r.Context(), s.timeout)
-			defer cancel()
-			res, err := s.agg.Call(ctx, p.Name, p.Arguments)
-			if err != nil {
-				resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32000, Message: err.Error()}}
-				if wantsSSE(r) { 
-					writeRPCSSE(w, resp)
-					return 
-				}
-				writeRPC(w, resp)
 				return
 			}
-			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Result: res}
-			if wantsSSE(r) { 
-				writeRPCSSE(w, resp)
-				return 
+
+			// 通知（没有 id）必须 202，无响应体（符合 MCP 规范）
+			if len(req.ID) == 0 {
+				// 特别处理 notifications/initialized：接受即可，不要回错误
+				if req.Method == "notifications/initialized" {
+					w.WriteHeader(http.StatusAccepted)
+					return
+				}
+				// 任何其它通知也接受（你也可按需校验 Method 再 400）
+				w.WriteHeader(http.StatusAccepted)
+				return
 			}
-			writeRPC(w, resp)
-			return
+
+			// 有 id 的请求：根据 Accept 决定回 SSE 还是 JSON（为兼容 Q，优先 SSE）
+			reply := func(result map[string]any, errObj *rpcErr) {
+				resp := rpcResp{JSONRPC: "2.0", ID: req.ID}
+				if errObj != nil {
+					resp.Error = errObj
+				} else {
+					resp.Result = result
+				}
+				if wantsSSE(r) {
+					writeSSEMessage(w, resp)
+				} else {
+					writeJSON(w, resp)
+				}
+			}
+
+			// 业务方法分发
+			switch req.Method {
+			case "initialize":
+				reply(map[string]any{
+					"protocolVersion": "2025-06-18",
+					"capabilities":    map[string]any{"tools": map[string]any{}},
+					"serverInfo":      map[string]any{"name": "mcp-http-bridge", "version": "0.3.0"},
+				}, nil)
+
+			case "tools/list":
+				tools := s.agg.ListExported()
+				// 统一成规范返回
+				result := map[string]any{"tools": tools}
+				reply(result, nil)
+
+			case "tools/call":
+				var p struct {
+					Name      string         `json:"name"`
+					Arguments map[string]any `json:"arguments"`
+				}
+				if len(req.Params) > 0 {
+					if err := json.Unmarshal(req.Params, &p); err != nil {
+						reply(nil, &rpcErr{Code: -32602, Message: "Invalid params"})
+						return
+					}
+				}
+				ctx, cancel := context.WithTimeout(r.Context(), s.timeout)
+				defer cancel()
+				res, err := s.agg.Call(ctx, p.Name, p.Arguments)
+				if err != nil {
+					reply(nil, &rpcErr{Code: -32000, Message: err.Error()})
+					return
+				}
+				reply(res, nil)
+
+			default:
+				// 未知方法：规范错误
+				reply(nil, &rpcErr{Code: -32601, Message: "Method not found"})
+			}
+
 		default:
-			resp := rpcResp{JSONRPC: "2.0", ID: req.ID, Error: &rpcErr{Code: -32601, Message: "Method not found"}}
-			if wantsSSE(r) { 
-				writeRPCSSE(w, resp)
-				return 
-			}
-			writeRPC(w, resp)
-			return
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 }
@@ -749,48 +751,41 @@ func writeRPC(w http.ResponseWriter, resp rpcResp) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// --- 新增：发送"原始文本"的 SSE 事件（不做 JSON 编码） ---
-func sendSSERaw(w http.ResponseWriter, flusher http.Flusher, event, raw string) {
-	if event == "" { 
-		event = "message" 
-	}
-	fmt.Fprintf(w, "event: %s\n", event)
-	// 关键：这里直接写纯文本路径，不包引号、不做 JSON
-	fmt.Fprintf(w, "data: %s\n\n", strings.TrimRight(raw, "\n"))
-	flusher.Flush()
-}
-
-// SSE helpers
+// --- add helpers for SSE and Accept handling ---
 func wantsSSE(r *http.Request) bool {
-	return strings.Contains(strings.ToLower(r.Header.Get("Accept")), "text/event-stream")
+	return strings.Contains(r.Header.Get("Accept"), "text/event-stream")
 }
-func beginSSE(w http.ResponseWriter) (http.Flusher, bool) {
-	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+func sseHeaders(w http.ResponseWriter) (http.Flusher, bool) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no") // 反代时禁缓冲
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming not supported", 500)
-		return nil, false
-	}
-	return flusher, true
+	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+	fl, ok := w.(http.Flusher)
+	return fl, ok
 }
-func writeRPCJSON(w http.ResponseWriter, resp rpcResp) {
+func writeSSEEvent(w http.ResponseWriter, fl http.Flusher, event string, payload any) {
+	var b []byte
+	if payload != nil { 
+		b, _ = json.Marshal(payload) 
+	} else { 
+		b = []byte("{}") 
+	}
+	fmt.Fprint(w, "event: "+event+"\n")
+	fmt.Fprint(w, "data: ")
+	w.Write(b)
+	fmt.Fprint(w, "\n\n")
+	fl.Flush()
+}
+func writeSSEMessage(w http.ResponseWriter, v any) {
+	fl, ok := sseHeaders(w)
+	if !ok { 
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return 
+	}
+	writeSSEEvent(w, fl, "message", v)
+}
+func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
-}
-
-func writeRPCSSE(w http.ResponseWriter, resp rpcResp) {
-	flusher, ok := beginSSE(w)
-	if !ok {
-		return
-	}
-	b, _ := json.Marshal(resp)
-	// 一条事件承载本次 JSON-RPC 响应，并立刻 flush
-	fmt.Fprintf(w, "event: message\n")
-	fmt.Fprintf(w, "data: %s\n\n", b)
-	flusher.Flush()
+	_ = json.NewEncoder(w).Encode(v)
 }
 func (s *httpServer) serve(addr string) error {
 	httpSrv := &http.Server{Addr: addr, Handler: s.mux, ReadHeaderTimeout: 5 * time.Second}
