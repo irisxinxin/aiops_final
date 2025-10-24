@@ -1,0 +1,13 @@
+{
+  "id": "dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel",
+  "title": "omada API gateway P99 latency critical SOP",
+  "description": "基于真实告警数据的API gateway P99延迟告警根因分析SOP",
+  "required_params": ["incident_key", "current_value", "threshold"],
+  "defaults": {
+    "service": "omada-api-gateway",
+    "category": "latency",
+    "window": "5m"
+  },
+  "template": "本次 sop_id={{.Params.sop_id}}，请基于以下检查完成 RCA 并按规范输出唯一 JSON：\n1) 用 @mcp-bridge.vm 执行：\n   histogram_quantile(0.99, sum by(le, uri) (rate(http_server_requests_seconds_bucket{application=~\"omada-api-gateway\", uri!~\"\\\\.*files\\\\.*|\\\\.*detailInfo|\\\\.*controllerInfo|\\\\.*clients|\\\\.*{omadacId}/api/\\\\.*|\\\\.*controllerIds\",status!~\"5[0-9]{2}\"}[5m])))\n2) 用 @mcp-bridge.vm 查询30分钟内最高的三个uri：\n   topk(3, sum by(uri) (rate(http_server_requests_seconds_bucket{application=~\"omada-api-gateway\", uri!~\"\\\\.*files\\\\.*|\\\\.*detailInfo|\\\\.*controllerInfo|\\\\.*clients|\\\\.*{omadacId}/api/\\\\.*|\\\\.*controllerIds\",status!~\"5[0-9]{2}\"}[5m])))\n告警数据如下：\n{\"incident_key\":\"{{.Params.incident_key}}\",\"status\":\"{{.Params.status}}\",\"service\":\"{{.Params.service}}\",\"category\":\"{{.Params.category}}\",\"threshold\":{{.Params.threshold}},\"window\":\"{{.Params.window}}\",\"metadata\":{\"current_value\":{{.Params.current_value}}}}",
+  "expected_source": "mcp:victoriametrics"
+}

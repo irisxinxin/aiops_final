@@ -1,3 +1,4 @@
 {
-  "sop_772148": "dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical"
+  "sop_772148": "dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical",
+  "sop_231969": "dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel"
 }
