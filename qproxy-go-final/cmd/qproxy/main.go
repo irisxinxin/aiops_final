@@ -447,15 +447,11 @@ func buildValidationSuffix(expected string) string {
 
 // cleanANSI 清理ANSI颜色码和转义序列
 func cleanANSI(text string) string {
-	// 清理ANSI转义序列
-	ansiRe := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	// 清理所有ANSI转义序列（包括颜色、样式等）
+	ansiRe := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 	text = ansiRe.ReplaceAllString(text, "")
 	
-	// 清理其他控制字符
-	controlRe := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
-	text = controlRe.ReplaceAllString(text, "")
-	
-	// 清理回车符和换行符的转义序列
+	// 清理回车符
 	text = strings.ReplaceAll(text, "\r", "")
 	
 	return text
@@ -485,9 +481,17 @@ func parseQValidation(stdout string, expected string, appended bool) QValidation
 		blk = mainMatches[len(mainMatches)-1][1]
 		qv.FoundJSON = true
 	} else {
-		qv.OK = false
-		qv.FailReason = "no json block found"
-		return qv
+		// 尝试更宽松的JSON匹配（处理没有```json```包装的情况）
+		looseRe := regexp.MustCompile(`\{[^{}]*"verdict"[^{}]*\}`)
+		looseMatches := looseRe.FindAllStringSubmatch(cleanOutput, -1)
+		if len(looseMatches) > 0 {
+			blk = looseMatches[len(looseMatches)-1][0]
+			qv.FoundJSON = true
+		} else {
+			qv.OK = false
+			qv.FailReason = "no json block found"
+			return qv
+		}
 	}
 
 	var parsed map[string]any
