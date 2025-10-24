@@ -1,7 +1,6 @@
 本次 sop_id=sop_772148，请基于以下检查完成 RCA 并按规范输出唯一 JSON：
 1) 用 @mcp-bridge.vm 执行：
    sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="",container!="istio-proxy",image!="",pod=~"omada-device-gateway.*",namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*",namespace=~"sdn5",resource="cpu"} > 0) by (pod, container)
-2) 用 @mcp-bridge.cloudwatch 查询相关 Pod 数量
 告警数据如下：
 {"incident_key":"dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical","status":"firing","service":"sdn5","category":"cpu","threshold":0.9,"window":"5m","metadata":{"current_value":0.92}}
 

@@ -450,10 +450,10 @@ func cleanANSI(text string) string {
 	// 清理所有ANSI转义序列（包括颜色、样式等）
 	ansiRe := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 	text = ansiRe.ReplaceAllString(text, "")
-	
+
 	// 清理回车符
 	text = strings.ReplaceAll(text, "\r", "")
-	
+
 	return text
 }
 
