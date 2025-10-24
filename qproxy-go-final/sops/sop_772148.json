@@ -1,0 +1,15 @@
+{
+  "id": "dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical",
+  "title": "sdn5 CPU critical SOP",
+  "description": "基于真实告警数据的CPU告警根因分析SOP",
+  "required_params": ["incident_key", "current_value", "threshold"],
+  "defaults": {
+    "service": "sdn5",
+    "category": "cpu",
+    "window": "5m"
+  },
+  "template": "本次 sop_id={{.Params.sop_id}}，请基于以下检查完成 RCA 并按规范输出唯一 JSON：\n1) 用 @mcp-bridge.vm 执行：\n   sum(rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\",container!=\"istio-proxy\",image!=\"\",pod=~\"omada-device-gateway.*\",namespace=~\"sdn5\"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!=\"POD\",pod=~\"omada-device-gateway.*\",namespace=~\"sdn5\",resource=\"cpu\"} > 0) by (pod, container)\n2) 用 @mcp-bridge.cloudwatch 查询相关 Pod 数量\n告警数据如下：\n{\"incident_key\":\"{{.Params.incident_key}}\",\"status\":\"{{.Params.status}}\",\"service\":\"{{.Params.service}}\",\"category\":\"{{.Params.category}}\",\"threshold\":{{.Params.threshold}},\"window\":\"{{.Params.window}}\",\"metadata\":{\"current_value\":{{.Params.current_value}}}}",
+  "expected_source": "mcp:victoriametrics"
+}
+
+

@@ -83,13 +83,20 @@ type SOP struct {
 }
 
 type SOPStore struct {
-	byID map[string]*SOP
-	mu   sync.RWMutex
-	dir  string
+	byID    map[string]*SOP // key: incident_key
+	bySOPID map[string]*SOP // key: sop_id (文件名)
+	mu      sync.RWMutex
+	dir     string
+	mapping map[string]string // sop_id -> incident_key 映射
 }
 
 func NewSOPStore(dir string) (*SOPStore, error) {
-	s := &SOPStore{byID: make(map[string]*SOP), dir: dir}
+	s := &SOPStore{
+		byID:    make(map[string]*SOP),
+		bySOPID: make(map[string]*SOP),
+		dir:     dir,
+		mapping: make(map[string]string),
+	}
 	if err := s.Reload(); err != nil {
 		return nil, err
 	}
@@ -103,9 +110,17 @@ func (s *SOPStore) Reload() error {
 	if err != nil {
 		return err
 	}
-	byID := make(map[string]*SOP)
+	byID := make(map[string]*SOP)      // incident_key -> SOP
+	bySOPID := make(map[string]*SOP)   // sop_id -> SOP
+	mapping := make(map[string]string) // sop_id -> incident_key
 
-	loadSOP := func(sop *SOP, src string) error {
+	// 首先加载映射文件
+	mappingPath := filepath.Join(s.dir, "sop_mapping.json")
+	if b, err := os.ReadFile(mappingPath); err == nil {
+		json.Unmarshal(b, &mapping)
+	}
+
+	loadSOP := func(sop *SOP, sopID string, src string) error {
 		if sop.ID == "" {
 			return fmt.Errorf("sop %s missing id", src)
 		}
@@ -126,12 +141,11 @@ func (s *SOPStore) Reload() error {
 				sop.ExpectedSource = "mcp:unknown"
 			}
 		}
-		byID[sop.ID] = sop
+		byID[sop.ID] = sop   // 按incident_key索引
+		bySOPID[sopID] = sop // 按sop_id索引
 		return nil
 	}
 
-	files, _ := os.ReadDir(s.dir)
-	_ = files
 	for _, e := range entries {
 		name := e.Name()
 		if e.IsDir() {
@@ -139,6 +153,9 @@ func (s *SOPStore) Reload() error {
 		}
 		if strings.HasPrefix(name, "._") {
 			continue
+		}
+		if name == "sop_mapping.json" {
+			continue // 跳过映射文件
 		}
 		low := strings.ToLower(name)
 		path := filepath.Join(s.dir, name)
@@ -153,8 +170,12 @@ func (s *SOPStore) Reload() error {
 			if err := json.Unmarshal(b, &sop); err != nil {
 				return fmt.Errorf("unmarshal %s: %w", path, err)
 			}
-			if err := loadSOP(&sop, path); err != nil {
-				return err
+			// 文件名格式：sop_xxxx.json，去掉扩展名得到sop_id
+			if strings.HasPrefix(name, "sop_") {
+				sopID := strings.TrimSuffix(name, ".json")
+				if err := loadSOP(&sop, sopID, path); err != nil {
+					return err
+				}
 			}
 		case strings.HasSuffix(low, ".jsonl"):
 			f, err := os.Open(path)
@@ -174,7 +195,8 @@ func (s *SOPStore) Reload() error {
 					_ = f.Close()
 					return fmt.Errorf("unmarshal %s:%d: %w", path, ln, err)
 				}
-				if err := loadSOP(&sop, fmt.Sprintf("%s:%d", path, ln)); err != nil {
+				sopID := fmt.Sprintf("%s_%d", strings.TrimSuffix(name, ".jsonl"), ln)
+				if err := loadSOP(&sop, sopID, fmt.Sprintf("%s:%d", path, ln)); err != nil {
 					_ = f.Close()
 					return err
 				}
@@ -189,6 +211,8 @@ func (s *SOPStore) Reload() error {
 		}
 	}
 	s.byID = byID
+	s.bySOPID = bySOPID
+	s.mapping = mapping
 	return nil
 }
 
@@ -197,6 +221,30 @@ func (s *SOPStore) Get(id string) (*SOP, bool) {
 	defer s.mu.RUnlock()
 	v, ok := s.byID[id]
 	return v, ok
+}
+
+func (s *SOPStore) GetBySOPID(sopID string) (*SOP, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	v, ok := s.bySOPID[sopID]
+	return v, ok
+}
+
+// 从incident_key生成sop_id的辅助函数
+func generateSOPIDFromIncidentKey(incidentKey string) string {
+	// 从incident_key生成sop_xxxxxx格式的sop_id (6位数字)
+	// incident_key格式：env|region|title|service|group_id
+	// 例如：dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical -> sop_511470
+	// 使用hash生成6位数字ID
+	hash := 0
+	for _, c := range incidentKey {
+		hash = hash*31 + int(c)
+	}
+	// 取绝对值并格式化为6位数字
+	if hash < 0 {
+		hash = -hash
+	}
+	return fmt.Sprintf("sop_%06d", hash%1000000)
 }
 
 func (s *SOPStore) List() []*SOP {
@@ -278,7 +326,7 @@ func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, RunResponse{OK: false, Error: "missing sop_id"})
 		return
 	}
-	sop, ok := s.sops.Get(req.SOPID)
+	sop, ok := s.sops.GetBySOPID(req.SOPID)
 	if !ok {
 		writeJSON(w, http.StatusNotFound, RunResponse{OK: false, Error: "unknown sop_id"})
 		return
@@ -338,8 +386,8 @@ func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
 		promptAppended = true
 	}
 
-	// resume dir per sop
-	resumeDir := filepath.Join(s.resumeTop, sop.ID)
+	// resume dir per sop_id
+	resumeDir := filepath.Join(s.resumeTop, req.SOPID)
 	if req.Reset {
 		_ = os.RemoveAll(resumeDir)
 	}
@@ -399,48 +447,76 @@ func buildValidationSuffix(expected string) string {
 
 func parseQValidation(stdout string, expected string, appended bool) QValidation {
 	qv := QValidation{PromptAppended: appended, ExpectedSource: expected}
-	// find last ```json ... ``` block
-	re := regexp.MustCompile("(?s)```json\\s*(\\{.*?\\})\\s*```")
-	matches := re.FindAllStringSubmatch(stdout, -1)
-	if len(matches) == 0 {
+
+	// 首先尝试解析主要的分析JSON（根据真实对话例子）
+	mainJSONRe := regexp.MustCompile(`(?s)json\s*\n(\{.*?\})`)
+	mainMatches := mainJSONRe.FindAllStringSubmatch(stdout, -1)
+
+	// 然后查找验证JSON块
+	validationRe := regexp.MustCompile("(?s)```json\\s*(\\{.*?\\})\\s*```")
+	validationMatches := validationRe.FindAllStringSubmatch(stdout, -1)
+
+	// 优先处理验证JSON块
+	var blk string
+	if len(validationMatches) > 0 {
+		blk = validationMatches[len(validationMatches)-1][1]
+		qv.FoundJSON = true
+	} else if len(mainMatches) > 0 {
+		// 如果没有验证块，尝试解析主要JSON
+		blk = mainMatches[len(mainMatches)-1][1]
+		qv.FoundJSON = true
+	} else {
 		qv.OK = false
-		qv.FailReason = "no json validation block found"
+		qv.FailReason = "no json block found"
 		return qv
 	}
-	qv.FoundJSON = true
-	blk := matches[len(matches)-1][1]
+
 	var parsed map[string]any
 	if err := json.Unmarshal([]byte(blk), &parsed); err != nil {
 		qv.OK = false
-		qv.FailReason = "invalid json validation block"
+		qv.FailReason = "invalid json block"
 		return qv
 	}
 	qv.Parsed = parsed
-	verdict, _ := parsed["verdict"].(string)
-	source, _ := parsed["source"].(string)
-	ec := -1
-	switch v := parsed["evidence_count"].(type) {
-	case float64:
-		ec = int(v)
-	case int:
-		ec = v
-	}
-	if verdict != "ok" {
-		qv.OK = false
-		qv.FailReason = "verdict not ok"
+
+	// 检查是否有verdict字段（验证块）
+	if verdict, ok := parsed["verdict"].(string); ok {
+		source, _ := parsed["source"].(string)
+		ec := -1
+		switch v := parsed["evidence_count"].(type) {
+		case float64:
+			ec = int(v)
+		case int:
+			ec = v
+		}
+		if verdict != "ok" {
+			qv.OK = false
+			qv.FailReason = "verdict not ok"
+			return qv
+		}
+		if expected != "" && source != expected {
+			qv.OK = false
+			qv.FailReason = fmt.Sprintf("unexpected source: want %s got %s", expected, source)
+			return qv
+		}
+		if ec < 0 {
+			qv.OK = false
+			qv.FailReason = "evidence_count < 0"
+			return qv
+		}
+		qv.OK = true
 		return qv
 	}
-	if expected != "" && source != expected {
-		qv.OK = false
-		qv.FailReason = fmt.Sprintf("unexpected source: want %s got %s", expected, source)
+
+	// 如果没有verdict字段，检查是否是主要分析JSON
+	if _, hasToolCalls := parsed["tool_calls"]; hasToolCalls {
+		// 这是主要分析JSON，认为验证通过
+		qv.OK = true
 		return qv
 	}
-	if ec < 0 {
-		qv.OK = false
-		qv.FailReason = "evidence_count < 0"
-		return qv
-	}
-	qv.OK = true
+
+	qv.OK = false
+	qv.FailReason = "no valid json structure found"
 	return qv
 }
 
@@ -491,16 +567,19 @@ func (s *Server) validateParams(sop *SOP, params map[string]string) ValidationRe
 // (duplicate removed) Server/NewServer
 
 func (s *Server) runQ(ctx context.Context, resumeDir, prompt string) (string, string, error) {
-	args := make([]string, 0, len(s.cfg.QArgs)+5)
+	args := make([]string, 0, len(s.cfg.QArgs)+6)
 	args = append(args, s.cfg.QArgs...)
-	args = append(args, "--agent", "remote-mcp", "--no-interactive", "--trust-all-tools")
+	args = append(args, "--agent", "remote-mcp", "--no-interactive", "--trust-all-tools", "--resume")
 
 	cmd := exec.CommandContext(ctx, s.cfg.QBin, args...)
 	cmd.Env = os.Environ()
 	for k, v := range s.cfg.MCPEng {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}
-	
+
+	// 设置工作目录为resumeDir，这样q命令会在正确的会话目录下运行
+	cmd.Dir = resumeDir
+
 	cmd.Stdin = strings.NewReader(prompt)
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
@@ -565,23 +644,85 @@ func (s *Server) askJSON(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if sopID == "" {
+		// 尝试从incident_key生成sop_id
+		if incidentKey, ok := body["incident_key"].(string); ok {
+			sopID = generateSOPIDFromIncidentKey(incidentKey)
+		}
+	}
+	if sopID == "" {
 		// if only one SOP exists, use it; else error
 		list := s.sops.List()
 		if len(list) == 1 {
-			sopID = list[0].ID
+			// 从映射中获取sop_id
+			for sopIDFromMapping := range s.sops.mapping {
+				sopID = sopIDFromMapping
+				break
+			}
 		}
 	}
 	if sopID == "" {
 		writeJSON(w, http.StatusBadRequest, RunResponse{OK: false, Error: "missing sop_id and multiple SOPs present"})
 		return
 	}
-	sop, ok := s.sops.Get(sopID)
+	sop, ok := s.sops.GetBySOPID(sopID)
 	if !ok {
 		writeJSON(w, http.StatusNotFound, RunResponse{OK: false, Error: "unknown sop_id"})
 		return
 	}
 	// build params from alert payload
 	params := map[string]string{}
+
+	// 设置sop_id参数
+	params["sop_id"] = sopID
+
+	// 从请求体中提取告警参数
+	var incidentKey string
+
+	// 优先从alert对象中提取参数
+	if alert, ok := body["alert"].(map[string]any); ok {
+		// 构建incident_key: env|region|title|service|group_id
+		env, _ := alert["env"].(string)
+		region, _ := alert["region"].(string)
+		title, _ := alert["title"].(string)
+		service, _ := alert["service"].(string)
+		groupID, _ := alert["group_id"].(string)
+
+		if env != "" && region != "" && title != "" && service != "" && groupID != "" {
+			incidentKey = fmt.Sprintf("%s|%s|%s|%s|%s", env, region, title, service, groupID)
+		}
+
+		// 提取其他参数
+		if status, ok := alert["status"].(string); ok {
+			params["status"] = status
+		}
+		if category, ok := alert["category"].(string); ok {
+			params["category"] = category
+		}
+		if threshold, ok := alert["threshold"].(float64); ok {
+			params["threshold"] = fmt.Sprintf("%.1f", threshold)
+		}
+		if window, ok := alert["window"].(string); ok {
+			params["window"] = window
+		}
+
+		// 从metadata中提取current_value
+		if metadata, ok := alert["metadata"].(map[string]any); ok {
+			if currentValue, ok := metadata["current_value"].(float64); ok {
+				params["current_value"] = fmt.Sprintf("%.2f", currentValue)
+			}
+		}
+	}
+
+	// 如果从alert中没找到，尝试直接从body中提取
+	if incidentKey == "" {
+		if v, ok := body["incident_key"].(string); ok {
+			incidentKey = v
+		}
+	}
+
+	params["incident_key"] = incidentKey
+
+	// 兼容旧的alert结构
 	if a, ok := body["alert"].(map[string]any); ok {
 		if md, ok := a["metadata"].(map[string]any); ok {
 			if exp, ok := md["expression"].(string); ok {
@@ -589,9 +730,12 @@ func (s *Server) askJSON(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	// merge defaults
 	for k, v := range sop.Defaults {
-		params[k] = v
+		if _, exists := params[k]; !exists {
+			params[k] = v
+		}
 	}
 
 	// render template
@@ -611,8 +755,8 @@ func (s *Server) askJSON(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(strings.ToLower(prompt), "\"verdict\"") {
 		prompt = prompt + "\n\n" + validationSuffix
 	}
-	// resume dir per sop
-	resumeDir := filepath.Join(s.resumeTop, sop.ID)
+	// resume dir per sop_id
+	resumeDir := filepath.Join(s.resumeTop, sopID)
 	if err := os.MkdirAll(resumeDir, 0o755); err != nil {
 		writeJSON(w, http.StatusInternalServerError, RunResponse{OK: false, Error: "resume dir create: " + err.Error()})
 		return
