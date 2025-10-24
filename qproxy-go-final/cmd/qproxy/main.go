@@ -412,8 +412,8 @@ func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
 		Error:            "",
 		SOPID:            sop.ID,
 		Prompt:           prompt,
-		QStdout:          stdout,
-		QStderr:          stderr,
+		QStdout:          cleanANSI(stdout),
+		QStderr:          cleanANSI(stderr),
 		ResumeDir:        resumeDir,
 		UsedParams:       params,
 		DurationMs:       time.Since(start).Milliseconds(),
@@ -445,16 +445,35 @@ func buildValidationSuffix(expected string) string {
 		"3) \"evidence_count\" 为你基于 MCP 结果给出的证据条数（>=0）。", expected)
 }
 
+// cleanANSI 清理ANSI颜色码和转义序列
+func cleanANSI(text string) string {
+	// 清理ANSI转义序列
+	ansiRe := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	text = ansiRe.ReplaceAllString(text, "")
+	
+	// 清理其他控制字符
+	controlRe := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	text = controlRe.ReplaceAllString(text, "")
+	
+	// 清理回车符和换行符的转义序列
+	text = strings.ReplaceAll(text, "\r", "")
+	
+	return text
+}
+
 func parseQValidation(stdout string, expected string, appended bool) QValidation {
 	qv := QValidation{PromptAppended: appended, ExpectedSource: expected}
 
+	// 清理ANSI颜色码
+	cleanOutput := cleanANSI(stdout)
+
 	// 首先尝试解析主要的分析JSON（根据真实对话例子）
 	mainJSONRe := regexp.MustCompile(`(?s)json\s*\n(\{.*?\})`)
-	mainMatches := mainJSONRe.FindAllStringSubmatch(stdout, -1)
+	mainMatches := mainJSONRe.FindAllStringSubmatch(cleanOutput, -1)
 
 	// 然后查找验证JSON块
 	validationRe := regexp.MustCompile("(?s)```json\\s*(\\{.*?\\})\\s*```")
-	validationMatches := validationRe.FindAllStringSubmatch(stdout, -1)
+	validationMatches := validationRe.FindAllStringSubmatch(cleanOutput, -1)
 
 	// 优先处理验证JSON块
 	var blk string
