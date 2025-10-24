@@ -1,0 +1,17 @@
+{
+  "id": "test|test-region|test alert|test-service|test-group",
+  "title": "Default Alert Analysis SOP",
+  "description": "默认告警分析SOP，使用VictoriaMetrics查询",
+  "required_params": [
+    "incident_key",
+    "current_value",
+    "threshold"
+  ],
+  "defaults": {
+    "category": "alert",
+    "service": "unknown",
+    "window": "5m"
+  },
+  "template": "本次 sop_id={{.Params.sop_id}}，请基于以下检查完成 RCA 并按规范输出唯一 JSON：\n1) 用 @mcp-bridge.vm 执行基础查询：\n   up{job=~\".*\"}\n2) 用 @mcp-bridge.vm 查询相关指标：\n   rate(up[5m])\n告警数据如下：\n{\"incident_key\":\"{{.Params.incident_key}}\",\"status\":\"{{.Params.status}}\",\"service\":\"{{.Params.service}}\",\"category\":\"{{.Params.category}}\",\"threshold\":{{.Params.threshold}},\"window\":\"{{.Params.window}}\",\"metadata\":{\"current_value\":{{.Params.current_value}}}}",
+  "expected_source": "mcp:victoriametrics"
+}

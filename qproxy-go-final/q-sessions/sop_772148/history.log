@@ -47,3 +47,19 @@
 1) "verdict" 只能是 "ok" 或 "fail"；
 2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
 3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-24 17:06:42]
+本次 sop_id=sop_772148，请基于以下检查完成 RCA 并按规范输出唯一 JSON：
+1) 用 @mcp-bridge.vm 执行：
+   sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="",container!="istio-proxy",image!="",pod=~"omada-device-gateway.*",namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*",namespace=~"sdn5",resource="cpu"} > 0) by (pod, container)
+告警数据如下：
+{"incident_key":"dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical","status":"firing","service":"sdn5","category":"cpu","threshold":0.9,"window":"5m","metadata":{"current_value":0.92}}
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。

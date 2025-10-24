@@ -666,10 +666,77 @@ func (s *Server) askJSON(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	// 先构建incident_key，然后查找对应的sop_id
+	var incidentKey string
 	if sopID == "" {
-		// 尝试从incident_key生成sop_id
-		if incidentKey, ok := body["incident_key"].(string); ok {
-			sopID = generateSOPIDFromIncidentKey(incidentKey)
+		// 优先从alert对象中构建incident_key
+		if alert, ok := body["alert"].(map[string]any); ok {
+			env, _ := alert["env"].(string)
+			region, _ := alert["region"].(string)
+			title, _ := alert["title"].(string)
+			service, _ := alert["service"].(string)
+			groupID, _ := alert["group_id"].(string)
+
+			if env != "" && region != "" && title != "" && service != "" && groupID != "" {
+				incidentKey = fmt.Sprintf("%s|%s|%s|%s|%s", env, region, title, service, groupID)
+				s.logger.Printf("DEBUG: built incident_key: %s", incidentKey)
+			}
+		}
+	}
+	if sopID == "" {
+		// 尝试从body中直接获取incident_key
+		if v, ok := body["incident_key"].(string); ok {
+			incidentKey = v
+		}
+	}
+	if sopID == "" && incidentKey != "" {
+		// 使用sop_mapping.json查找对应的sop_id
+		for sopIDFromMapping, incidentKeyFromMapping := range s.sops.mapping {
+			if incidentKeyFromMapping == incidentKey {
+				sopID = sopIDFromMapping
+				s.logger.Printf("DEBUG: found sop_id from mapping: %s -> %s", incidentKey, sopID)
+				break
+			}
+		}
+	}
+	if sopID == "" && incidentKey != "" {
+		// 如果映射中没有找到，创建默认的sop_default.json
+		sopID = "sop_default"
+		s.logger.Printf("DEBUG: using default sop_id: %s for incident_key: %s", sopID, incidentKey)
+
+		// 创建默认SOP文件
+		defaultSOP := SOP{
+			ID:             incidentKey,
+			Title:          "Default Alert Analysis SOP",
+			Description:    "默认告警分析SOP，使用VictoriaMetrics查询",
+			RequiredParams: []string{"incident_key", "current_value", "threshold"},
+			Defaults: map[string]string{
+				"service":  "unknown",
+				"category": "alert",
+				"window":   "5m",
+			},
+			Template: `本次 sop_id={{.Params.sop_id}}，请基于以下检查完成 RCA 并按规范输出唯一 JSON：
+1) 用 @mcp-bridge.vm 执行基础查询：
+   up{job=~".*"}
+2) 用 @mcp-bridge.vm 查询相关指标：
+   rate(up[5m])
+告警数据如下：
+{"incident_key":"{{.Params.incident_key}}","status":"{{.Params.status}}","service":"{{.Params.service}}","category":"{{.Params.category}}","threshold":{{.Params.threshold}},"window":"{{.Params.window}}","metadata":{"current_value":{{.Params.current_value}}}}`,
+			ExpectedSource: "mcp:victoriametrics",
+		}
+
+		// 保存默认SOP到文件
+		defaultSOPPath := filepath.Join(s.sops.dir, "sop_default.json")
+		if b, err := json.MarshalIndent(defaultSOP, "", "  "); err == nil {
+			if err := os.WriteFile(defaultSOPPath, b, 0644); err != nil {
+				s.logger.Printf("ERROR: failed to write default SOP: %v", err)
+			} else {
+				s.logger.Printf("DEBUG: created default SOP file: %s", defaultSOPPath)
+				// 重新加载SOP存储
+				if err := s.sops.Reload(); err != nil {
+					s.logger.Printf("ERROR: failed to reload SOP store: %v", err)
+				}
+			}
 		}
 	}
 	if sopID == "" {
@@ -698,22 +765,15 @@ func (s *Server) askJSON(w http.ResponseWriter, r *http.Request) {
 	// 设置sop_id参数
 	params["sop_id"] = sopID
 
-	// 从请求体中提取告警参数
-	var incidentKey string
-
-	// 优先从alert对象中提取参数
-	if alert, ok := body["alert"].(map[string]any); ok {
-		// 构建incident_key: env|region|title|service|group_id
-		env, _ := alert["env"].(string)
-		region, _ := alert["region"].(string)
-		title, _ := alert["title"].(string)
-		service, _ := alert["service"].(string)
-		groupID, _ := alert["group_id"].(string)
-
-		if env != "" && region != "" && title != "" && service != "" && groupID != "" {
-			incidentKey = fmt.Sprintf("%s|%s|%s|%s|%s", env, region, title, service, groupID)
+	// 如果还没有incident_key，尝试从body中直接提取
+	if incidentKey == "" {
+		if v, ok := body["incident_key"].(string); ok {
+			incidentKey = v
 		}
+	}
 
+	// 从alert对象中提取其他参数
+	if alert, ok := body["alert"].(map[string]any); ok {
 		// 提取其他参数
 		if status, ok := alert["status"].(string); ok {
 			params["status"] = status
@@ -733,13 +793,6 @@ func (s *Server) askJSON(w http.ResponseWriter, r *http.Request) {
 			if currentValue, ok := metadata["current_value"].(float64); ok {
 				params["current_value"] = fmt.Sprintf("%.2f", currentValue)
 			}
-		}
-	}
-
-	// 如果从alert中没找到，尝试直接从body中提取
-	if incidentKey == "" {
-		if v, ok := body["incident_key"].(string); ok {
-			incidentKey = v
 		}
 	}
 

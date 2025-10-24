@@ -2,7 +2,7 @@
 1) 用 @mcp-bridge.vm 执行：
    sum(rate(container_cpu_usage_seconds_total{container!="POD",container!="",container!="istio-proxy",image!="",pod=~"omada-device-gateway.*",namespace=~"sdn5"}[5m])) by (pod, container) / sum(kube_pod_container_resource_limits{container!="POD",pod=~"omada-device-gateway.*",namespace=~"sdn5",resource="cpu"} > 0) by (pod, container)
 告警数据如下：
-{"incident_key":"dev2-sdn5|dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel","status":"resolved","service":"sdn5","category":"latency","threshold":6.0,"window":"5m","metadata":{"current_value":60.00}}
+{"incident_key":"dev|dev-nbu-aps1|sdn5 container CPU usage is too high|sdn5|sdn5_critical","status":"firing","service":"sdn5","category":"cpu","threshold":0.9,"window":"5m","metadata":{"current_value":0.92}}
 
 请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
 ```json

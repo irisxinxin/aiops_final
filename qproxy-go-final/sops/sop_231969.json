@@ -1,5 +1,5 @@
 {
-  "id": "dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel",
+  "id": "dev2-sdn5|dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel",
   "title": "omada API gateway P99 latency critical SOP",
   "description": "基于真实告警数据的API gateway P99延迟告警根因分析SOP",
   "required_params": ["incident_key", "current_value", "threshold"],

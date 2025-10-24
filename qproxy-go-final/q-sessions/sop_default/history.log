@@ -1,0 +1,18 @@
+
+[2025-10-24 17:12:08]
+本次 sop_id=sop_default，请基于以下检查完成 RCA 并按规范输出唯一 JSON：
+1) 用 @mcp-bridge.vm 执行基础查询：
+   up{job=~".*"}
+2) 用 @mcp-bridge.vm 查询相关指标：
+   rate(up[5m])
+告警数据如下：
+{"incident_key":"test|test-region|test alert|test-service|test-group","status":"firing","service":"unknown","category":"test","threshold":1.0,"window":"5m","metadata":{"current_value":1.50}}
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。

@@ -1,0 +1,36 @@
+
+[2025-10-24 17:09:11]
+本次 sop_id=sop_231969，请基于以下检查完成 RCA 并按规范输出唯一 JSON：
+1) 用 @mcp-bridge.vm 执行：
+   histogram_quantile(0.99, sum by(le, uri) (rate(http_server_requests_seconds_bucket{application=~"omada-api-gateway", uri!~"\\.*files\\.*|\\.*detailInfo|\\.*controllerInfo|\\.*clients|\\.*{omadacId}/api/\\.*|\\.*controllerIds",status!~"5[0-9]{2}"}[5m])))
+2) 用 @mcp-bridge.vm 查询30分钟内最高的三个uri：
+   topk(3, sum by(uri) (rate(http_server_requests_seconds_bucket{application=~"omada-api-gateway", uri!~"\\.*files\\.*|\\.*detailInfo|\\.*controllerInfo|\\.*clients|\\.*{omadacId}/api/\\.*|\\.*controllerIds",status!~"5[0-9]{2}"}[5m])))
+告警数据如下：
+{"incident_key":"dev2-sdn5|dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel","status":"resolved","service":"omada-api-gateway","category":"latency","threshold":6.0,"window":"5m","metadata":{"current_value":60.00}}
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
+
+[2025-10-24 17:12:59]
+本次 sop_id=sop_231969，请基于以下检查完成 RCA 并按规范输出唯一 JSON：
+1) 用 @mcp-bridge.vm 执行：
+   histogram_quantile(0.99, sum by(le, uri) (rate(http_server_requests_seconds_bucket{application=~"omada-api-gateway", uri!~"\\.*files\\.*|\\.*detailInfo|\\.*controllerInfo|\\.*clients|\\.*{omadacId}/api/\\.*|\\.*controllerIds",status!~"5[0-9]{2}"}[5m])))
+2) 用 @mcp-bridge.vm 查询30分钟内最高的三个uri：
+   topk(3, sum by(uri) (rate(http_server_requests_seconds_bucket{application=~"omada-api-gateway", uri!~"\\.*files\\.*|\\.*detailInfo|\\.*controllerInfo|\\.*clients|\\.*{omadacId}/api/\\.*|\\.*controllerIds",status!~"5[0-9]{2}"}[5m])))
+告警数据如下：
+{"incident_key":"dev2-sdn5|dev2-sdn5|omada api gateway interface p99 latency is too high|omada-api-gateway|omada-api-gateway_tel","status":"resolved","service":"omada-api-gateway","category":"latency","threshold":6.0,"window":"5m","metadata":{"current_value":60.00}}
+
+请在答案**最后**追加一段用于正确性校验的 JSON，并使用 ```json 代码块包裹，严格如下键名：
+```json
+{"verdict":"ok|fail","source":"mcp:victoriametrics","evidence_count": 0}
+```
+要求：
+1) "verdict" 只能是 "ok" 或 "fail"；
+2) "source" 固定为上面的值，表示使用了对应的 MCP 工具；
+3) "evidence_count" 为你基于 MCP 结果给出的证据条数（>=0）。
