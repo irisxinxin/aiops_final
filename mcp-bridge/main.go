@@ -638,9 +638,9 @@ func (s *httpServer) routes() {
 		case http.MethodGet:
 			// 长连（Server -> Client）SSE 通道；兼容老示例，先发 endpoint 事件
 			fl, ok := sseHeaders(w)
-			if !ok { 
+			if !ok {
 				http.Error(w, "streaming unsupported", http.StatusInternalServerError)
-				return 
+				return
 			}
 			// 兼容老客户端/文档：告知消息端点（你就是 /mcp）
 			writeSSEEvent(w, fl, "endpoint", "/mcp")
@@ -764,10 +764,10 @@ func sseHeaders(w http.ResponseWriter) (http.Flusher, bool) {
 }
 func writeSSEEvent(w http.ResponseWriter, fl http.Flusher, event string, payload any) {
 	var b []byte
-	if payload != nil { 
-		b, _ = json.Marshal(payload) 
-	} else { 
-		b = []byte("{}") 
+	if payload != nil {
+		b, _ = json.Marshal(payload)
+	} else {
+		b = []byte("{}")
 	}
 	fmt.Fprint(w, "event: "+event+"\n")
 	fmt.Fprint(w, "data: ")
@@ -777,9 +777,9 @@ func writeSSEEvent(w http.ResponseWriter, fl http.Flusher, event string, payload
 }
 func writeSSEMessage(w http.ResponseWriter, v any) {
 	fl, ok := sseHeaders(w)
-	if !ok { 
+	if !ok {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
-		return 
+		return
 	}
 	writeSSEEvent(w, fl, "message", v)
 }
